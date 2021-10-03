@@ -1,0 +1,5 @@
+matplotlib==3.4.3
+jsonschema==4.0.1
+simplejson==3.16.0
+numpy==1.21.2
+
