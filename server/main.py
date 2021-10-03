@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 import json
 from models import *
 
@@ -7,7 +7,7 @@ app = FastAPI()
 
 def fill_countries_datamodel():
     # read and convert json data from countries.geojson to data model Countries
-    data = open("countries.geojson", "r").read()
+    data = open('countries.geojson', 'r').read()
     countries_geojson_data = json.loads(data)
     countries = Countries()
 
@@ -28,25 +28,28 @@ def fill_countries_datamodel():
     return countries
 
 
-@app.get("/")
+@app.get('/')
 async def root():
+    # describe the endpoints for the user
     return {'message': 'Welcome to countries geodata visualisation',
-            'endpoints': ['/iso_code', '/all_geometries']}
+            'endpoints': {'/iso_code': 'POST', '/all_geometries': 'GET'}}
 
 
-@app.post("/iso_code")
+@app.post('/iso_code')
 # takes as input one or multiple country names and returns the ISO3 country codes
 # and return the associated geographical data when the optional parameter ‘details’ is True
 async def iso_code(iso_code_request: IsoCodeRequest):
     iso_code_response = IsoCodeResponse()
     # offset pagination
-    iso_code_request.countries = iso_code_request.countries[iso_code_request.offset:iso_code_request.offset + iso_code_request.limit]
+    iso_code_request.countries = iso_code_request.countries[
+                                 iso_code_request.offset:iso_code_request.offset + iso_code_request.limit]
     countries = fill_countries_datamodel()
 
     name_to_code = {}
     name_to_geometry = {}
     for i in range(len(countries.features)):
         name_to_code[countries.features[i].properties.name] = countries.features[i].id
+
     # we check if the client want the geometry data to avoid unnecessary computations
     if iso_code_request.details:
         for i in range(len(countries.features)):
@@ -68,7 +71,7 @@ async def iso_code(iso_code_request: IsoCodeRequest):
     return iso_code_response
 
 
-@app.get("/all_geometries")
+@app.get('/all_geometries')
 # retrieve all the contents of the countries.geojson file in one go
 async def all_geometries():
     return fill_countries_datamodel()
